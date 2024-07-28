@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.edu.ufabc.mfmachado.humblemq.proto";
+
+service CreateChannel {
+  rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse) {}
+}
+
+service DeleteChannel {
+  rpc DeleteChannel(DeleteChannelRequest) returns (DeleteChannelResponse) {}
+}
+
+service ListChannel {
+  rpc ListChannel(ListChannelRequest) returns (ListChannelResponse) {}
+}
+
+enum OperationStatus {
+  UNSPECIFIED = 0;
+  SUCCESS = 1;
+  FAILURE = 2;
+}
+
+message CreateChannelRequest {
+  string name = 1;
+}
+
+message CreateChannelResponse {
+  string name = 1;
+  OperationStatus creation_status = 2;
+}
+
+message DeleteChannelRequest {
+  string name = 1;
+}
+
+message DeleteChannelResponse {
+  string name = 1;
+  OperationStatus deletion_status = 2;
+}
+
+message ListChannelRequest {}
+
+message ListChannelResponse {
+  repeated Channel channels = 1;
+}
+
+message Channel {
+  string name = 1;
+}
