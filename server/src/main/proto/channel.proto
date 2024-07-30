@@ -16,13 +16,20 @@ service ListChannel {
 }
 
 enum OperationStatus {
-  UNSPECIFIED = 0;
+  UNSPECIFIED_STATUS = 0;
   SUCCESS = 1;
   FAILURE = 2;
 }
 
+enum ChannelType {
+  UNSPECIFIED_TYPE = 0;
+  SIMPLE = 1;
+  MULTIPLE = 2;
+}
+
 message CreateChannelRequest {
   string name = 1;
+  ChannelType type = 2;
 }
 
 message CreateChannelResponse {
@@ -47,4 +54,6 @@ message ListChannelResponse {
 
 message Channel {
   string name = 1;
+  ChannelType type = 2;
+  int32 message_count = 3;
 }

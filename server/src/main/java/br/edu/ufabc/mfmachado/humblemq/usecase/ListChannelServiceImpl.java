@@ -22,14 +22,26 @@ public class ListChannelServiceImpl extends ListChannelGrpc.ListChannelImplBase 
 
     @Override
     public void listChannel(ListChannelRequest request, StreamObserver<ListChannelResponse> responseObserver) {
-        List<ChannelEntity> channelEntities = channelRepository.findAll();
-        ListChannelResponse.Builder responseBuilder = ListChannelResponse.newBuilder();
-        channelEntities.forEach(
-                channelEntity ->
-                        responseBuilder.addChannels(Channel.newBuilder().setName(channelEntity.getName()).build())
-        );
-        ListChannelResponse response = responseBuilder.build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        try {
+            List<ChannelEntity> channelEntities = channelRepository.findAll();
+            ListChannelResponse.Builder responseBuilder = ListChannelResponse.newBuilder();
+            channelEntities.forEach(
+                    channelEntity ->
+                            responseBuilder.addChannels(
+                                    Channel.newBuilder()
+                                            .setName(channelEntity.getName())
+                                            .setType(channelEntity.getType())
+                                            //.setMessageCount() TODO Impl message count
+                                            .build()
+                            )
+            );
+            ListChannelResponse response = responseBuilder.build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            ListChannelResponse response = ListChannelResponse.newBuilder().build();
+            responseObserver.onNext(response); //TODO Revisar comportamento de erro
+            responseObserver.onCompleted();
+        }
     }
 }

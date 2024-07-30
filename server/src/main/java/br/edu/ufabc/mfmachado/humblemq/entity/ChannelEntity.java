@@ -1,20 +1,18 @@
 package br.edu.ufabc.mfmachado.humblemq.entity;
 
+import br.edu.ufabc.mfmachado.humblemq.proto.ChannelType;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @Entity
 @Table(name = "channel")
 public class ChannelEntity {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
     @Column
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column
+    private ChannelType type;
 }
