@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/mattmfx/humble-mq-go-client/internal/app"
 	pb "github.com/mattmfx/humble-mq-go-client/internal/pb"
 )
@@ -32,6 +33,8 @@ func ListChannels() (*pb.ListChannelResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(len(response.GetChannels()))
 
 	return response, nil
 }
