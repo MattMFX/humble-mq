@@ -2,6 +2,7 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "br.edu.ufabc.mfmachado.humblemq.proto";
+option go_package = "github.com/mattmfx/humble-mq-go-client";
 
 service CreateChannel {
   rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse) {}

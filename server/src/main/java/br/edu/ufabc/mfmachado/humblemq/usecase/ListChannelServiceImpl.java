@@ -23,7 +23,7 @@ public class ListChannelServiceImpl extends ListChannelGrpc.ListChannelImplBase 
     @Override
     public void listChannel(ListChannelRequest request, StreamObserver<ListChannelResponse> responseObserver) {
         try {
-            List<ChannelEntity> channelEntities = channelRepository.findAll();
+            List<ChannelEntity> channelEntities = channelRepository.findAll(); //TODO Tipo do channel chegando null
             ListChannelResponse.Builder responseBuilder = ListChannelResponse.newBuilder();
             channelEntities.forEach(
                     channelEntity ->

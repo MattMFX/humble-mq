@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	pb "github.com/mattmfx/humble-mq-go-client/internal/pb"
+	"github.com/mattmfx/humble-mq-go-client/internal/service"
 	"log"
 	"os"
 )
@@ -30,21 +32,39 @@ func init() {
 }
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	for {
-		fmt.Println(">>> Press # to enter interactive mode <<<")
-		scanner.Scan()
-
-		err := scanner.Err()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if scanner.Text() == CommandInteractive {
-			readCommands()
-		}
+	channel, err := service.CreateChannel("channel1", pb.ChannelType_SIMPLE)
+	fmt.Println("here")
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
+
+	fmt.Printf("Name: %s, Status: %s\n", channel.Name, channel.CreationStatus)
+
+	channels, err := service.ListChannels()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(len(channels.Channels))
+	for _, ch := range channels.GetChannels() {
+		fmt.Println(ch.Name)
+	}
+	//scanner := bufio.NewScanner(os.Stdin)
+	//
+	//for {
+	//	fmt.Println(">>> Press # to enter interactive mode <<<")
+	//	scanner.Scan()
+	//
+	//	err := scanner.Err()
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//
+	//	if scanner.Text() == CommandInteractive {
+	//		readCommands()
+	//	}
+	//}
 }
 
 func readCommands() {
