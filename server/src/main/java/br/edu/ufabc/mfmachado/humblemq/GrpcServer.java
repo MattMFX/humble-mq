@@ -2,35 +2,31 @@ package br.edu.ufabc.mfmachado.humblemq;
 
 import br.edu.ufabc.mfmachado.humblemq.configuration.grpc.GrpcConfiguration;
 import io.grpc.*;
+import lombok.RequiredArgsConstructor;
+import io.grpc.protobuf.services.ProtoReflectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
+@RequiredArgsConstructor
 public class GrpcServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcServer.class);
     private Server server;
 
-    private final BindableService createChannelServiceImpl;
-    private final BindableService listChannelServiceImpl;
+    private final List<BindableService> services;
     private final GrpcConfiguration grpcConfiguration;
-
-    public GrpcServer(BindableService createChannelServiceImpl, BindableService listChannelServiceImpl, GrpcConfiguration grpcConfiguration) {
-        this.createChannelServiceImpl = createChannelServiceImpl;
-        this.listChannelServiceImpl = listChannelServiceImpl;
-        this.grpcConfiguration = grpcConfiguration;
-    }
 
     public void start() throws IOException, InterruptedException {
         LOGGER.info("Starting gRPC server...");
-        Server server = Grpc.newServerBuilderForPort(grpcConfiguration.getPort(), InsecureServerCredentials.create())
-                .addService(createChannelServiceImpl)
-                .addService(listChannelServiceImpl)
-                .build();
-        this.server = server;
+        ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(grpcConfiguration.getPort(), InsecureServerCredentials.create());
+        services.forEach(serverBuilder::addService);
+        serverBuilder.addService(ProtoReflectionService.newInstance());
+        this.server = serverBuilder.build();
 
         server.start();
         stopServerOnApplicationShutdown();

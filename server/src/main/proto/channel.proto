@@ -16,12 +16,6 @@ service ListChannel {
   rpc ListChannel(ListChannelRequest) returns (ListChannelResponse) {}
 }
 
-enum OperationStatus {
-  UNSPECIFIED_STATUS = 0;
-  SUCCESS = 1;
-  FAILURE = 2;
-}
-
 enum ChannelType {
   UNSPECIFIED_TYPE = 0;
   SIMPLE = 1;
@@ -33,27 +27,21 @@ message CreateChannelRequest {
   ChannelType type = 2;
 }
 
-message CreateChannelResponse {
-  string name = 1;
-  OperationStatus creation_status = 2;
-}
+message CreateChannelResponse {}
 
 message DeleteChannelRequest {
   string name = 1;
 }
 
-message DeleteChannelResponse {
-  string name = 1;
-  OperationStatus deletion_status = 2;
-}
+message DeleteChannelResponse {}
 
 message ListChannelRequest {}
 
 message ListChannelResponse {
-  repeated Channel channels = 1;
+  repeated ChannelMessage channels = 1;
 }
 
-message Channel {
+message ChannelMessage {
   string name = 1;
   ChannelType type = 2;
   int32 message_count = 3;

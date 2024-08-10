@@ -1,4 +1,4 @@
-package br.edu.ufabc.mfmachado.humblemq.entity;
+package br.edu.ufabc.mfmachado.humblemq.gateway.entity;
 
 import br.edu.ufabc.mfmachado.humblemq.proto.ChannelType;
 import jakarta.persistence.*;
@@ -15,4 +15,6 @@ public class ChannelEntity {
     @Enumerated(EnumType.STRING)
     @Column
     private ChannelType type;
+
+    // TODO Recovery automático dos channels no boot
 }
