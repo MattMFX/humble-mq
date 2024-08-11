@@ -1,6 +1,7 @@
 package br.edu.ufabc.mfmachado.humblemq;
 
 import br.edu.ufabc.mfmachado.humblemq.configuration.grpc.GrpcConfiguration;
+import br.edu.ufabc.mfmachado.humblemq.usecase.ChannelHandler;
 import io.grpc.*;
 import lombok.RequiredArgsConstructor;
 import io.grpc.protobuf.services.ProtoReflectionService;
@@ -20,6 +21,7 @@ public class GrpcServer {
 
     private final List<BindableService> services;
     private final GrpcConfiguration grpcConfiguration;
+    private final ChannelHandler channelHandler;
 
     public void start() throws IOException, InterruptedException {
         LOGGER.info("Starting gRPC server...");
@@ -28,6 +30,7 @@ public class GrpcServer {
         serverBuilder.addService(ProtoReflectionService.newInstance());
         this.server = serverBuilder.build();
 
+        channelHandler.recoverChannels();
         server.start();
         stopServerOnApplicationShutdown();
         LOGGER.info("The gRPC server started! Listening on port {}", grpcConfiguration.getPort());

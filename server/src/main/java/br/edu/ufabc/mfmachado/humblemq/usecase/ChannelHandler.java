@@ -4,19 +4,21 @@ import br.edu.ufabc.mfmachado.humblemq.entity.Channel;
 import br.edu.ufabc.mfmachado.humblemq.entity.Subscriber;
 import br.edu.ufabc.mfmachado.humblemq.proto.ChannelType;
 import br.edu.ufabc.mfmachado.humblemq.proto.Message;
-import io.grpc.stub.StreamObserver;
+import br.edu.ufabc.mfmachado.humblemq.usecase.model.ChannelModel;
 
 import java.util.List;
 
 public interface ChannelHandler {
 
-    void createChannel(String name, ChannelType type);
+    void createChannel(String channelName, ChannelType type);
 
-    void deleteChannel(String name);
+    void deleteChannel(String channelName);
 
-    List<Channel> listChannels();
+    List<ChannelModel> listChannels();
 
-    Channel getChannel(String name);
+    void subscribeToChannel(String channelName, Subscriber subscriber);
 
-    void subscribeToChannel(String channel, Subscriber subscriber);
+    void sendMessages(String channelName, List<Message> messages);
+
+    void recoverChannels();
 }

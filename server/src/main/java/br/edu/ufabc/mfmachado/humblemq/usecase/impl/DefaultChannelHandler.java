@@ -2,17 +2,21 @@ package br.edu.ufabc.mfmachado.humblemq.usecase.impl;
 
 import br.edu.ufabc.mfmachado.humblemq.entity.Channel;
 import br.edu.ufabc.mfmachado.humblemq.entity.Subscriber;
+import br.edu.ufabc.mfmachado.humblemq.exceptions.channel.ChannelAlreadyExistsException;
+import br.edu.ufabc.mfmachado.humblemq.exceptions.channel.ChannelDoesNotExist;
 import br.edu.ufabc.mfmachado.humblemq.gateway.entity.ChannelEntity;
+import br.edu.ufabc.mfmachado.humblemq.gateway.entity.MessageEntity;
 import br.edu.ufabc.mfmachado.humblemq.gateway.repository.ChannelRepository;
 import br.edu.ufabc.mfmachado.humblemq.proto.ChannelType;
 import br.edu.ufabc.mfmachado.humblemq.proto.Message;
 import br.edu.ufabc.mfmachado.humblemq.usecase.ChannelHandler;
-import io.grpc.stub.StreamObserver;
+import br.edu.ufabc.mfmachado.humblemq.usecase.model.ChannelModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -20,36 +24,76 @@ public class DefaultChannelHandler implements ChannelHandler {
     private final ChannelRepository channelRepository;
 
     @Override
-    public void createChannel(String name, ChannelType type) {
-        Channel.registerChannel(name, type);
-        ChannelEntity channelEntity = new ChannelEntity();
-        channelEntity.setName(name);
-        channelEntity.setType(type);
+    public void createChannel(String channelName, ChannelType type) {
+         if (channelRepository.existsByName(channelName)) {
+             throw new ChannelAlreadyExistsException();
+         }
+
+        Channel.registerChannel(channelName, type);
+        ChannelEntity channelEntity = new ChannelEntity(channelName, type);
         channelRepository.save(channelEntity);
     }
 
     @Override
-    public void deleteChannel(String name) {
-        channelRepository.deleteByName(name);
+    public void deleteChannel(String channelName) {
+        ChannelEntity channelEntity = channelRepository.findByName(channelName).orElseThrow(ChannelDoesNotExist::new);
+        channelRepository.delete(channelEntity);
+        Channel.unregisterChannel(channelName);
     }
 
     @Override
-    public List<Channel> listChannels() {
+    public List<ChannelModel> listChannels() {
         List<ChannelEntity> channelEntities = channelRepository.findAll();
         return channelEntities.stream()
-                .map(channelEntity -> Channel.getChannel(channelEntity.getName()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(channelEntity -> ChannelModel.builder()
+                        .name(channelEntity.getName())
+                        .type(channelEntity.getType())
+                        .messageCount(channelEntity.getMessages().size())
+                        .build())
                 .toList();
     }
 
     @Override
-    public Channel getChannel(String name) {
-        return Channel.getChannel(name).orElseThrow(() -> new IllegalArgumentException("Channel does not exist"));
+    public void subscribeToChannel(String channelName, Subscriber subscriber) {
+        getChannel(channelName).subscribe(subscriber);
     }
 
     @Override
-    public void subscribeToChannel(String channel, Subscriber subscriber) {
-        getChannel(channel).subscribe(subscriber);
+    public void sendMessages(String channelName, List<Message> messages) {
+        Channel channel = getChannel(channelName);
+        ChannelEntity entity = channelRepository.findByName(channelName).orElseThrow(ChannelDoesNotExist::new);
+        messages.stream()
+                .map(message -> new MessageEntity(UUID.randomUUID(), message.getContent()))
+                .forEach(messageEntity -> {
+                    entity.getMessages().add(messageEntity);
+                    ChannelEntity channelEntity = channelRepository.save(entity);
+                    sendAndRemove(channel, channelEntity, messageEntity);
+        });
+    }
+
+    /**
+     * Esse método é chamado no boot da aplicação para recuperar os channels e as mensagens que estavam
+     * ativos antes da aplicação ser desligada, garantindo a persistencia dos canais e suas mensagens.
+     */
+    @Override
+    public void recoverChannels() {
+        List<ChannelEntity> channelEntities = channelRepository.findAll();
+        channelEntities.forEach(channelEntity -> {
+            Channel channel = Channel.registerChannel(channelEntity.getName(), channelEntity.getType());
+            channelEntity.getMessages().forEach(messageEntity -> sendAndRemove(channel, channelEntity, messageEntity));
+        });
+    }
+
+    private Channel getChannel(String channelName) {
+        return Channel.getChannel(channelName).orElseThrow(ChannelDoesNotExist::new);
+    }
+
+    private void sendAndRemove(Channel channel, ChannelEntity channelEntity, MessageEntity messageEntity) {
+        CompletableFuture<Void> future = channel.sendMessage(messageEntity.getContent());
+        future.thenApply(v -> {
+            channelEntity.getMessages().removeIf(m -> m.getUuid().equals(messageEntity.getUuid()));
+            channelRepository.saveAndFlush(channelEntity);
+            return v;
+        });
     }
 }

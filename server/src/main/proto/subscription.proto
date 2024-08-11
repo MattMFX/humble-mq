@@ -7,7 +7,7 @@ option java_package = "br.edu.ufabc.mfmachado.humblemq.proto";
 option go_package = "github.com/mattmfx/humble-mq-go-client";
 
 service Subscribe {
-  rpc Subscribe(SubscribeRequest) returns (stream Message) {}
+  rpc ListenMessages(SubscribeRequest) returns (stream Message) {}
   rpc FetchMessage(SubscribeRequest) returns (Message) {}
 }
 

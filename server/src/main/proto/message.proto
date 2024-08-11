@@ -9,9 +9,8 @@ service SendMessage {
 }
 
 message SendMessageRequest {
-  string sender = 1;
-  string channel = 2;
-  repeated Message message = 3;
+  string channel = 1;
+  repeated Message message = 2;
 }
 
 message SendMessageResponse {}
