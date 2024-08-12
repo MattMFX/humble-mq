@@ -23,11 +23,13 @@ public class Channel {
     private final ChannelType type;
 
     private final List<Subscriber> subscribers;
+    private final List<String> messages;
 
     private Channel(String name, ChannelType type) {
         this.name = name;
         this.type = type;
         this.subscribers = new CopyOnWriteArrayList<>();
+        this.messages = new CopyOnWriteArrayList<>();
     }
 
     public static Channel registerChannel(String channelName, ChannelType channelType) {
@@ -48,25 +50,19 @@ public class Channel {
 
     public void subscribe(Subscriber subscriber) {
         System.out.println("Subscriber added to channel " + name);
+        updateSubscribers();
         subscribers.add(subscriber);
     }
 
-    public CompletableFuture<Void> sendMessage(String message) {
-        return CompletableFuture.runAsync(() -> {
-            List<Subscriber> receivers = getReceivers();
-            receivers.forEach(receiver -> sendToSubscriber(receiver, message));
-        });
+    public void sendMessage(String message) {
+        System.out.println("Sending message " + message + " to channel " + name);
+        List<Subscriber> receivers = getReceivers();
+        System.out.println("Sending message to " + receivers.size() + " subscribers");
+        receivers.forEach(receiver -> sendToSubscriber(receiver, message));
     }
 
     private List<Subscriber> getReceivers() {
-
-        subscribers.forEach(subscriber -> {
-            if (subscriber.context().isCancelled()) {
-                System.out.println("Subscriber cancelled");
-                subscribers.remove(subscriber);
-            }
-        });
-
+        updateSubscribers();
         while (subscribers.isEmpty()) {
             try {
                 Thread.sleep(1000);
@@ -106,41 +102,12 @@ public class Channel {
         }
     }
 
-
-
-
-
-
-
-
-
-
-//    public void addMessage(String message) {
-//        messages.add(message);
-//    }
-//
-//    public Integer getPendingMessages() {
-//        return messages.size();
-//    }
-//
-//    private void startProcessing() {
-//        System.out.println("Processing messages for channel " + name);
-//        while (isActive) {
-//            messages.forEach(message -> {
-//                List<Subscriber> receivers = getReceivers();
-//                if (!receivers.isEmpty()) {
-//                    receivers.forEach(receiver -> sendToSubscriber(receiver, message));
-//                    messages.remove(message);
-//                }
-//            });
-//        }
-//    }
-//
-//    private void stopProcessing() {
-//        isActive = Boolean.FALSE;
-//    }
-//
-//
-
-
+    private void updateSubscribers() {
+        subscribers.forEach(subscriber -> {
+            if (subscriber.context().isCancelled()) {
+                System.out.println("Subscriber cancelled");
+                subscribers.remove(subscriber);
+            }
+        });
+    }
 }

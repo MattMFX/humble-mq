@@ -61,14 +61,14 @@ public class DefaultChannelHandler implements ChannelHandler {
     @Override
     public void sendMessages(String channelName, List<Message> messages) {
         Channel channel = getChannel(channelName);
-        ChannelEntity entity = channelRepository.findByName(channelName).orElseThrow(ChannelDoesNotExist::new);
-        messages.stream()
+        ChannelEntity channelEntity = channelRepository.findByName(channelName).orElseThrow(ChannelDoesNotExist::new);
+        List<MessageEntity> messageEntities = messages.stream()
                 .map(message -> new MessageEntity(UUID.randomUUID(), message.getContent()))
-                .forEach(messageEntity -> {
-                    entity.getMessages().add(messageEntity);
-                    ChannelEntity channelEntity = channelRepository.save(entity);
-                    sendAndRemove(channel, channelEntity, messageEntity);
-        });
+                .toList();
+
+        channelEntity.getMessages().addAll(messageEntities);
+        ChannelEntity finalChannelEntity = channelRepository.saveAndFlush(channelEntity);
+        sendAndRemove(channel, finalChannelEntity, messageEntities);
     }
 
     /**
@@ -80,7 +80,7 @@ public class DefaultChannelHandler implements ChannelHandler {
         List<ChannelEntity> channelEntities = channelRepository.findAll();
         channelEntities.forEach(channelEntity -> {
             Channel channel = Channel.registerChannel(channelEntity.getName(), channelEntity.getType());
-            channelEntity.getMessages().forEach(messageEntity -> sendAndRemove(channel, channelEntity, messageEntity));
+            sendAndRemove(channel, channelEntity, channelEntity.getMessages().stream().toList());
         });
     }
 
@@ -88,12 +88,12 @@ public class DefaultChannelHandler implements ChannelHandler {
         return Channel.getChannel(channelName).orElseThrow(ChannelDoesNotExist::new);
     }
 
-    private void sendAndRemove(Channel channel, ChannelEntity channelEntity, MessageEntity messageEntity) {
-        CompletableFuture<Void> future = channel.sendMessage(messageEntity.getContent());
-        future.thenApply(v -> {
-            channelEntity.getMessages().removeIf(m -> m.getUuid().equals(messageEntity.getUuid()));
-            channelRepository.saveAndFlush(channelEntity);
-            return v;
-        });
+    private void sendAndRemove(Channel channel, ChannelEntity channelEntity, List<MessageEntity> messageEntities) {
+        CompletableFuture.runAsync(() ->
+            messageEntities.forEach(messageEntity -> {
+                channel.sendMessage(messageEntity.getContent());
+                channelEntity.getMessages().removeIf(m -> m.getUuid().equals(messageEntity.getUuid()));
+                channelRepository.saveAndFlush(channelEntity);
+            }));
     }
 }
