@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.edu.ufabc.mfmachado.humblemq.proto";
+option go_package = "github.com/mattmfx/humble-mq-go-client";
+
+service CreateChannel {
+  rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse) {}
+}
+
+service DeleteChannel {
+  rpc DeleteChannel(DeleteChannelRequest) returns (DeleteChannelResponse) {}
+}
+
+service ListChannel {
+  rpc ListChannel(ListChannelRequest) returns (ListChannelResponse) {}
+}
+
+enum ChannelType {
+  UNSPECIFIED_TYPE = 0;
+  SIMPLE = 1;
+  MULTIPLE = 2;
+}
+
+message CreateChannelRequest {
+  string name = 1;
+  ChannelType type = 2;
+}
+
+message CreateChannelResponse {}
+
+message DeleteChannelRequest {
+  string name = 1;
+}
+
+message DeleteChannelResponse {}
+
+message ListChannelRequest {}
+
+message ListChannelResponse {
+  repeated ChannelMessage channels = 1;
+}
+
+message ChannelMessage {
+  string name = 1;
+  ChannelType type = 2;
+  int32 message_count = 3;
+}

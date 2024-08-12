@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "message.proto";
+
+option java_multiple_files = true;
+option java_package = "br.edu.ufabc.mfmachado.humblemq.proto";
+option go_package = "github.com/mattmfx/humble-mq-go-client";
+
+service Subscribe {
+  rpc ListenMessages(SubscribeRequest) returns (stream Message) {}
+  rpc FetchMessage(SubscribeRequest) returns (Message) {}
+}
+
+message SubscribeRequest {
+  string channel = 1;
+}
